@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 function Login() {
 
     const { onLogin, email, setEmail } = useContext(Context);
+    const [error, setError] = useState("")
     const [password, setPassword] = useState('');
 
     const navigate = useNavigate();
@@ -17,6 +18,7 @@ function Login() {
         } else{
             setPassword(target.value);
         }
+        setError("");
     }
 
     const handleSubmit = async (event: FormEvent) => {
@@ -28,7 +30,6 @@ function Login() {
                 email,
                 password
             });
-            console.log("passou pra cá");
             
             const token = response.data.token.token;
             const id = response.data.user.id;
@@ -36,11 +37,17 @@ function Login() {
             setPassword('');
             navigate('/products');
         } catch (err) {
-            console.error('Error logging in:', err)
+            if (axios.isAxiosError(err) && err.response) {
+                if (err.response.status === 400 || err.response.status === 422) {
+                    setError("Invalid login credentials. Please try again.");
+                } else {
+                    setError("Something went wrong. Please try again later.");
+                }
+            } else {
+                setError("Network error. Please check your connection.");
+            }
         }
-        
-    }
-    // colocar uma mensagem de login inválido caso esteja errado
+    };
 
     return (
         <div className="w-full h-full flex items-center justify-center">
@@ -72,6 +79,11 @@ function Login() {
                                 className="border rounded-lg block w-full p-2.5 focus:outline-none focus:border-saffron-300 focus:ring-2 focus:ring-saffron-100"
                             />
                         </div>
+                        {error && (
+                            <div className="text-red-600 text-sm font-medium">
+                                {error}
+                            </div>
+                        )}
                         <button className="w-full text-white bg-saffron-200 hover:bg-saffron-400 rounded-lg py-2 px-5 font-medium">
                             Sign In
                         </button>
