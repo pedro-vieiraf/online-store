@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 function Register() {
 
     const { email, setEmail, onLogin, cpf, setCPF, name, setName } = useContext(Context);
+    const [error, setError] = useState("")
     const [password, setPassword] = useState('');
 
     const navigate = useNavigate();
@@ -23,6 +24,7 @@ function Register() {
         if(target.name === 'name') {
             setName(target.value);
         }
+        setError("");
     }
 
     const handleSubmit = async (event: FormEvent) => {
@@ -30,6 +32,7 @@ function Register() {
         const address = import.meta.env.VITE_BACKEND_URL;
 
         try {
+          setError('');
             const response = await axios.post(`${address}/register`, {
                 email,
                 password
@@ -53,10 +56,17 @@ function Register() {
             setPassword('')
             navigate('/products');
         } catch (err) {
-            console.error('Error registering:', err)
+          if (axios.isAxiosError(err) && err.response) {
+            if (err.response.status === 400 || err.response.status === 422) {
+                setError("Registration failed. Try again.");
+            } else {
+                setError("Something went wrong. Please try again later.");
+            }
+        } else {
+            setError("Network error. Please check your connection.");
         }
-        
-    }
+      }
+    };
 
     return (
         <div className="w-full h-screen flex items-center justify-center">
@@ -125,7 +135,12 @@ function Register() {
                     className="border border-gray-300 rounded-lg block w-full p-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-saffron-400"
                   />
                 </div>
-      
+                {/* Mensagem de Erro */}
+                {error && (
+                            <p className="text-red-500 text-sm font-medium text-center mt-2">
+                                {error}
+                            </p>
+                )}
                 {/* Botão de Registro */}
                 <button className="w-full text-white bg-saffron-200 hover:bg-saffron-400 rounded-lg py-2 px-5 font-medium">
                   Register
