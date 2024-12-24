@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Customer from '#models/customer'
 import Sale from '#models/sale'
+import Product from '#models/product'
 
 export default class CustomersController {
   async index({ response }: HttpContext) {
@@ -18,12 +19,12 @@ export default class CustomersController {
   async store({ request, response }: HttpContext) {
     // create a new customer
     try {
-      const { name, cpf } = request.body()
-      if (!name || !cpf) {
-        return response.status(400).json({ error: 'Name and CPF are required' })
+      const { name, userId, cpf } = request.body()
+      if (!name || !cpf || !userId) {
+        return response.status(400).json({ error: 'All the fields are required' })
       }
 
-      await Customer.create({ name, cpf })
+      await Customer.create({ name, userId, cpf })
 
       return response.status(201)
     } catch (err) {
@@ -52,6 +53,12 @@ export default class CustomersController {
         .preload('product')
         .orderBy('created_at', 'desc')
 
+      // get all products for this customer
+      const productsQuery = Product.query()
+        .where('customer_id', id)
+        .whereNull('deletedAt')
+        .orderBy('created_at', 'desc')
+
       // filtering by month and/or year
       if (month && year) {
         salesQuery.whereRaw('MONTH(created_at) = ? AND YEAR(created_at) = ?', [month, year])
@@ -78,6 +85,19 @@ export default class CustomersController {
         }
       })
 
+      // get the products
+      const products = await productsQuery
+
+      // format the products data
+      const filteredProducts = products.map((product) => {
+        return {
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+        }
+      })
+
       return response.status(200).json({
         customer: {
           id: customer.id,
@@ -85,6 +105,7 @@ export default class CustomersController {
           cpf: customer.cpf,
         },
         sales: filteredSales,
+        products: filteredProducts,
       })
     } catch (err) {
       console.error(err)

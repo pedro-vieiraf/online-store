@@ -7,9 +7,9 @@ export default class ProductsController {
     // return all products
     try {
       const products = await Product.query()
-        .select('name', 'price')
+        .select('id', 'name', 'price', 'stock')
         .whereNull('deletedAt')
-        .orderBy('name', 'asc')
+        .orderBy('created_at', 'asc')
 
       return response.status(200).json(products)
     } catch (err) {
@@ -21,12 +21,12 @@ export default class ProductsController {
   async store({ request, response }: HttpContext) {
     // create new product
     try {
-      const { name, price, stock, description } = request.body()
-      if (!name || !price || !stock || !description) {
+      const { customerId, name, price, stock, description } = request.body()
+      if (!customerId || !name || !price || !stock || !description) {
         return response.status(400).json({ error: 'All fields are required' })
       }
 
-      await Product.create({ name, price, stock, description })
+      await Product.create({ customerId, name, price, stock, description })
 
       return response.status(201).json({ message: 'Product created' })
     } catch (err) {
@@ -41,7 +41,7 @@ export default class ProductsController {
       const { id } = params
       const product = await Product.query()
         .where('id', id)
-        .select('name', 'price', 'stock', 'description')
+        .select('id', 'name', 'price', 'stock', 'description')
         .first()
 
       if (!product) {

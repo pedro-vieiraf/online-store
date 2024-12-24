@@ -1,0 +1,67 @@
+services:
+  frontend:
+    build: ./store-frontend
+    container_name: frontend
+    tty: true
+    stdin_open: true
+    ports:
+      - 5173:5173
+    volumes:
+      - ./store-frontend:/app
+    environment:
+      - TZ=UTC
+      - NODE_ENV=development
+      - PORT=5173
+      - HOST=0.0.0.0
+      - VITE_BACKEND_URL=http://localhost:3333 # http://host.docker.internal:3333
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - frontend_network
+      - backend_network
+
+  backend:
+    build: ./my-adonisjs-app
+    container_name: backend
+    tty: true
+    stdin_open: true
+    ports:
+      - 3333:3333
+    volumes:
+      - ./my-adonisjs-app:/app
+    environment:
+      - TZ=UTC
+      - NODE_ENV=development
+      - PORT=3333
+      - HOST=0.0.0.0
+      - LOG_LEVEL=info
+      - APP_KEY=DGFvXF6d4SmvJHSMIx4WFCPZ6N8asozn
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=user
+      - DB_PASSWORD=userpassword
+      - DB_DATABASE=store_db
+    depends_on:
+      - db  
+    networks:
+      - backend_network
+
+  db:
+    image: mysql:5.7
+    container_name: db
+    ports:
+      - 3306:3306
+    restart: unless-stopped
+    environment:
+      - MYSQL_DATABASE=store_db
+      - MYSQL_USER=user
+      - MYSQL_ROOT_PASSWORD=userpassword
+      - MYSQL_PASSWORD=userpassword
+    networks:
+      - backend_network
+
+networks:
+  frontend_network:
+    driver: bridge
+  backend_network:
+    driver: bridge

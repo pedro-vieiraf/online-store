@@ -8,9 +8,7 @@ export default class SalesController {
    */
   async store({ request, response }: HttpContext) {
     // create a new sale
-    const customerId = request.input('customerId')
-    const productId = request.input('productId')
-    const quantity = request.input('quantity')
+    const { customerId, productId, quantity } = request.body()
 
     if (!customerId || !productId || !quantity) {
       return response.status(400).json({ error: 'All fields are required' })
